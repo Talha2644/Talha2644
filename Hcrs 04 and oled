@@ -1,0 +1,34 @@
+from machine import Pin, I2C
+from hcsr04 import HCSR04
+from time import sleep
+from ssd1306 import SSD1306_I2C
+
+# HC-SR04 sensörünün bağlantı pinleri
+trigger_pin = 5
+echo_pin = 18
+
+# OLED ekran bağlantıları (SCL, SDA)
+i2c = I2C(scl=Pin(22), sda=Pin(21))
+oled = SSD1306_I2C(128, 64, i2c)
+
+# HC-SR04 sensörünü başlat
+sensor = HCSR04(trigger_pin=trigger_pin, echo_pin=echo_pin, echo_timeout_us=10000)
+
+while True:
+    try:
+        # Mesafeyi ölç ve cm cinsinden al
+        distance_cm = sensor.distance_cm()
+        
+        # Mesafeyi ekrana yazdır
+        oled.fill(0)
+        oled.text("Distance:", 0, 0)
+        oled.text(str(distance_cm) + " cm", 0, 16)
+        oled.show()
+        
+        # 1 saniye bekle
+        sleep(1)
+    
+    except OSError as ex:
+        if ex.args[0] == 110:  # ETIMEDOUT
+            raise OSError('Out of range')
+        raise ex
